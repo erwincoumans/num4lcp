@@ -40,7 +40,7 @@ A1 =     [    4.0006         1        -2         1       1.5       1.5       1.5
          1.5      -1.5      -1.5       1.5    4.0006         4         1         1
          1.5      -1.5      -1.5       1.5         4    4.0006         1         1
          1.5      -1.5      -1.5       1.5         1         1    4.0006         4
-         1.5      -1.5      -1.5       1.5         1         1         4    4.0006 ];
+         1.5      -1.5      -1.5       1.5         1         1         4    4.0006 ]
      
 b1  =  [  -1
     -1
@@ -49,7 +49,7 @@ b1  =  [  -1
 		-1
 		-1
 		-1
-		-1 ];
+		-1 ]
 
 x	 = zeros(num_variables,1);
 x0     = zeros(num_variables,1);
@@ -81,5 +81,33 @@ hi = [ 10000.
 			0.1
 			0.1
 			0.1 ];
+
+%Method 0, not working yet
+B = pinv(A1);
+M = [ B -B
+    -B B];
+q = [ (-B*b1 - lo)'   (hi + B*b1)' ]';
+x0 = zeros(16,1);
+
+[z1 err] = lemke(M,q,x0);
+display('Method 0: lemke with tangential force, friction clamped to lo=-0.1 hi=0.1]')
+display(z1);
+
+%Method 1, not working yet
+
+Q = zeros(8,8);
+
+M = [A1 Q
+    Q -A1];
+q1 = b1 + A1*lo;
+q2 = b1 + A1*hi;
+
+q = [(q1)' (q2)']';
+
+[z1 err] = lemke(M,q,x0);
+
+display('Method 1: lemke with tangential force, friction clamped to lo=-0.1 hi=0.1]')
+display(z1);
+
 
 
