@@ -10,7 +10,7 @@ close all;
 clc;
 
 lambda1 = 1.0;
-max_iter = 50;
+max_iter = 10;
 tol_rel  = 0.0;
 tol_abs  = 0.0;
 num_variables = 8;
@@ -130,7 +130,9 @@ M = [B  -B;
     -B   B];
 q = [ (-B*b1 - lo)'   (hi + B*b1)' ]';
 z0 = zeros(16,1);
-[z1 err] = lemke(M, q, z0);
+%[z1 err] = lemke(M, q, z0);
+%[z1 e1 i1 f1 conv1 m1] = psor(M, q, z0, lambda1, max_iter, tol_rel, tol_abs, true);
+[z1 e1 i1 f1 conv1 m1] = fischer_newton(M, q, z0, max_iter, tol_rel, tol_abs, 'random', true);
 
 w1       = M * z1 + q;
 display('Method 0: lemke with tangential force, friction clamped to lo=-0.1 hi=0.1]')
@@ -154,21 +156,12 @@ H = min(hi-x1,min(x1-lo,-y1));
 display(H'*H);
 
 %
-%Method 1, not working yet
-%
-%Q = zeros(8,8);
-%
-%M = [A1 Q
-%    Q -A1];
-%q1 = b1 + A1*lo;
-%q2 = b1 + A1*hi;
-%
-%q = [(q1)' (q2)']';
-%
-%[z1 err] = lemke(M,q,x0);
-%
-%display('Method 1: lemke with tangential force, friction clamped to lo=-0.1 hi=0.1]')
-%display(z1);
-%
+%Method 1, convert the problem from a LCP to a QP and added bound constraints 
+%on the variables, which yields the solution. 
+%Effectively, if you wish to produce the "more physical" result, 
+%then you would only constrain the normal directions of A:
+display ('quadprog')
+quadprog(A1,b1*0.5,-A1(1:4,:), b1(1:4), [], [], lo, hi)
+
 
 
