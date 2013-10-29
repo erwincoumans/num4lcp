@@ -40,7 +40,7 @@ A1 =     [    4.0006         1        -2         1       1.5       1.5       1.5
          1.5      -1.5      -1.5       1.5    4.0006         4         1         1
          1.5      -1.5      -1.5       1.5         4    4.0006         1         1
          1.5      -1.5      -1.5       1.5         1         1    4.0006         4
-         1.5      -1.5      -1.5       1.5         1         1         4    4.0006 ]
+         1.5      -1.5      -1.5       1.5         1         1         4    4.0006 ];
      
 b1  =  [  -1
     -1
@@ -49,19 +49,19 @@ b1  =  [  -1
 		-1
 		-1
 		-1
-		-1 ]
+		-1 ];
 
 x	 = zeros(num_variables,1);
 x0     = zeros(num_variables,1);
     
 %[z1 e1 i1 f1 conv1 m1] = psor(A, b, x0, lambda1, max_iter, tol_rel, tol_abs, true);
-display('lemke no tangential force (friction should be zero)')
-[z1 err] = lemke(A0,b0,x0);
-display(z1);
+%display('lemke no tangential force (friction should be zero)')
+%[z1 err] = lemke(A0,b0,x0);
+%display(z1);
 
-display('lemke with tangential force (non-zero friction)')
-[z1 err] = lemke(A1,b1,x0);
-display(z1);
+%display('lemke with tangential force (non-zero friction)')
+%[z1 err] = lemke(A1,b1,x0);
+%display(z1);
 
 %
 lo = [ 0.
@@ -83,31 +83,92 @@ hi = [ 10000.
 			0.1 ];
 
 %Method 0, not working yet
-B = pinv(A1);
-M = [ B -B
-    -B B];
-q = [ (-B*b1 - lo)'   (hi + B*b1)' ]';
-x0 = zeros(16,1);
 
-[z1 err] = lemke(M,q,x0);
+
+
+%--- Definition of bounded LCP
+%
+% y = A x + b
+%
+% x = l     => y >= 0
+% x = h     => y <= 0
+% l < x < h => y  = 0
+%
+% Split y into positive and negative components y = y^+ - y^-
+%
+% Then we rewrite as follows
+%
+%    y^+ > 0 => x-l = 0
+%    y^+ = 0 => x-l > 0
+%    y^- > 0 => h-x = 0
+%    y^- = 0 => h-x > 0
+%
+% From y = A x + b and B*A = I we have
+%
+%    y - b = A x
+%        x = -B b + B y
+%        x = -B b + B y^+ - B y^-
+%
+% Substitution yields
+%
+% y^+ > 0 =>   B y^+  - B y^- + (-B*b-l) = 0
+% y^+ = 0 =>   B y^+  - B y^- + (-B*b-l) > 0
+% y^- > 0 => - B y^+  + B y^- + (h+B*b) = 0
+% y^- = 0 => - B y^+  + B y^- + (h+B*b) > 0
+%
+% Introducing matrix notation we may write
+%
+% |x^+ | =   |  B  -B|  | y^+ |   | (-B*b - l) |
+% |x^- | =   | -B   B|  | y^- | + | (h + B*b) |
+%    w   =       M         z    +       q
+%
+% Then we simply have  0<= w  compl. z >= 0
+%
+
+B = pinv(A1);
+M = [B  -B;
+    -B   B];
+q = [ (-B*b1 - lo)'   (hi + B*b1)' ]';
+z0 = zeros(16,1);
+[z1 err] = lemke(M, q, z0);
+
+w1       = M * z1 + q;
 display('Method 0: lemke with tangential force, friction clamped to lo=-0.1 hi=0.1]')
 display(z1);
+display(w1);
+display('Complementarity test of LCP')
+display(w1'*z1);
 
+%--- Converting back from LCP solution space to BLCP solution space
+y_plus  = z1(1:8);
+y_minus = z1(9:16);
+y1      = y_plus - y_minus;
+x1      = B*(y1-b1);
+
+display('Solution of BLCP')
+display(x1);
+display(y1);
+
+display('Complementarity test of BLCP')
+H = min(hi-x1,min(x1-lo,-y1));
+display(H'*H);
+
+%
 %Method 1, not working yet
-
-Q = zeros(8,8);
-
-M = [A1 Q
-    Q -A1];
-q1 = b1 + A1*lo;
-q2 = b1 + A1*hi;
-
-q = [(q1)' (q2)']';
-
-[z1 err] = lemke(M,q,x0);
-
-display('Method 1: lemke with tangential force, friction clamped to lo=-0.1 hi=0.1]')
-display(z1);
-
+%
+%Q = zeros(8,8);
+%
+%M = [A1 Q
+%    Q -A1];
+%q1 = b1 + A1*lo;
+%q2 = b1 + A1*hi;
+%
+%q = [(q1)' (q2)']';
+%
+%[z1 err] = lemke(M,q,x0);
+%
+%display('Method 1: lemke with tangential force, friction clamped to lo=-0.1 hi=0.1]')
+%display(z1);
+%
 
 
