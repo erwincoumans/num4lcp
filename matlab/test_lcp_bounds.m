@@ -1,9 +1,8 @@
-
 % A0,b0 is the LCP with no tangential force, so friction should be zero
 % A1,b1 is the LCP with some tangential force, so friction should be non-zero
 % The idea is to introduce lower and upper bound for the friction
 % and convert those bounds into the A and b, so that friction is clamped
-
+% Appendix A1 of this paper has a derivation, see http://www.cs.duke.edu/~parr/nips10.pdf
 
 clear all;
 close all;
